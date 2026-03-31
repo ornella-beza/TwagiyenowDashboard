@@ -1,144 +1,130 @@
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { DollarSign, TrendingUp } from 'lucide-react';
+import React from 'react';
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell,
+} from 'recharts';
+import { DollarSign, TrendingUp, Ticket } from 'lucide-react';
 
-interface MonthlyData {
-  month: string;
-  revenue: number;
-  commission: number;
-}
+const monthlyData = [
+  { month: 'Jan', revenue: 1200000, commission: 60000 },
+  { month: 'Feb', revenue: 1400000, commission: 70000 },
+  { month: 'Mar', revenue: 1600000, commission: 80000 },
+  { month: 'Apr', revenue: 1800000, commission: 90000 },
+  { month: 'May', revenue: 2000000, commission: 100000 },
+  { month: 'Jun', revenue: 2200000, commission: 110000 },
+];
 
-interface CompanyRevenue {
-  name: string;
-  value: number;
-  percentage: number;
-}
+const companyRevenue = [
+  { name: 'RITCO',         value: 450000, pct: 35 },
+  { name: 'Horizon',       value: 380000, pct: 30 },
+  { name: 'Kigali Express',value: 280000, pct: 22 },
+  { name: 'Others',        value: 90000,  pct: 13 },
+];
 
-const RevenueAnalytics: React.FC = () => {
-  const monthlyData: MonthlyData[] = [
-    { month: 'Jan', revenue: 1200000, commission: 60000 },
-    { month: 'Feb', revenue: 1400000, commission: 70000 },
-    { month: 'Mar', revenue: 1600000, commission: 80000 },
-    { month: 'Apr', revenue: 1800000, commission: 90000 },
-    { month: 'May', revenue: 2000000, commission: 100000 },
-    { month: 'Jun', revenue: 2200000, commission: 110000 },
-  ];
+const COLORS = ['#1E8449', '#F5A623', '#E67E22', '#888888'];
 
-  const companyRevenue: CompanyRevenue[] = [
-    { name: 'RITCO', value: 450000, percentage: 35 },
-    { name: 'Horizon', value: 380000, percentage: 30 },
-    { name: 'Kigali Express', value: 280000, percentage: 22 },
-    { name: 'Others', value: 90000, percentage: 13 },
-  ];
+const fmt = (v: number) => `₨ ${(v / 1000).toFixed(0)}k`;
 
-  const COLORS = ['#1E8449', '#FFC107', '#FF6B6B', '#4ECDC4'];
+const RevenueAnalytics: React.FC = () => (
+  <div className="page-container">
 
-  return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Revenue Analytics</h1>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">Total Platform Revenue</p>
-              <p className="text-3xl font-bold text-primary">₨ 8.2M</p>
-              <p className="text-green-600 text-sm mt-2">↑ 12% from last month</p>
+    {/* KPIs */}
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+      {[
+        { label: 'Total Platform Revenue',      value: '₨ 8.2M',  sub: '↑ 12% from last month', icon: DollarSign, color: '#1E8449', bg: '#E8F5E9' },
+        { label: 'Total Commission (₨50/ticket)',value: '₨ 410K', sub: '↑ 8% from last month',   icon: TrendingUp, color: '#E67E22', bg: '#FEF3E2' },
+        { label: 'Tickets Sold (This Month)',    value: '8,200',   sub: 'Avg: 273 tickets/day',   icon: Ticket,     color: '#F5A623', bg: '#FFF8E1' },
+      ].map((s, i) => {
+        const Icon = s.icon;
+        return (
+          <div key={i} className="stat-card">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: s.bg }}>
+                <Icon size={20} style={{ color: s.color }} />
+              </div>
             </div>
-            <DollarSign size={40} className="text-primary opacity-20" />
+            <p className="text-xs text-muted font-medium uppercase tracking-wide">{s.label}</p>
+            <p className="text-2xl font-bold text-black mt-1">{s.value}</p>
+            <p className="text-xs text-primary mt-1 font-medium">{s.sub}</p>
           </div>
-        </div>
+        );
+      })}
+    </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm">Total Commission (50 RWF/ticket)</p>
-              <p className="text-3xl font-bold text-accent">₨ 410K</p>
-              <p className="text-green-600 text-sm mt-2">↑ 8% from last month</p>
-            </div>
-            <TrendingUp size={40} className="text-accent opacity-20" />
-          </div>
-        </div>
+    {/* Monthly Trend */}
+    <div className="content-card mb-6">
+      <h2 className="section-heading">Monthly Revenue Trend</h2>
+      <ResponsiveContainer width="100%" height={280}>
+        <LineChart data={monthlyData}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F5" />
+          <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#888888' }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 12, fill: '#888888' }} axisLine={false} tickLine={false} tickFormatter={fmt} />
+          <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #F5F5F5', fontSize: 13 }} formatter={(v: number) => [`₨ ${v.toLocaleString()}`, '']} />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <Line type="monotone" dataKey="revenue"    stroke="#1E8449" strokeWidth={2.5} dot={false} name="Total Revenue" />
+          <Line type="monotone" dataKey="commission" stroke="#F5A623" strokeWidth={2.5} dot={false} name="Commission" />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div>
-            <p className="text-gray-600 text-sm">Tickets Sold (This Month)</p>
-            <p className="text-3xl font-bold text-blue-600">8,200</p>
-            <p className="text-gray-600 text-sm mt-2">Avg: 273 tickets/day</p>
-          </div>
-        </div>
-      </div>
+    {/* Charts Row */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      {/* Monthly Trend */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Monthly Revenue Trend</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={monthlyData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip formatter={(value: number) => `₨ ${value.toLocaleString()}`} />
-            <Legend />
-            <Line type="monotone" dataKey="revenue" stroke="#1E8449" strokeWidth={2} name="Total Revenue" />
-            <Line type="monotone" dataKey="commission" stroke="#FFC107" strokeWidth={2} name="Commission" />
-          </LineChart>
+      {/* Pie Chart */}
+      <div className="content-card">
+        <h2 className="section-heading">Revenue by Company</h2>
+        <ResponsiveContainer width="100%" height={260}>
+          <PieChart>
+            <Pie
+              data={companyRevenue}
+              cx="50%" cy="50%"
+              outerRadius={90}
+              dataKey="value"
+              label={({ name, pct }) => `${name} ${pct}%`}
+              labelLine={false}
+            >
+              {companyRevenue.map((_, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(v: number) => [`₨ ${v.toLocaleString()}`, '']} contentStyle={{ borderRadius: '8px', border: '1px solid #F5F5F5', fontSize: 13 }} />
+          </PieChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Revenue by Company */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Revenue by Company</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={companyRevenue}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percentage }) => `${name} ${percentage}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {companyRevenue.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value: number) => `₨ ${value.toLocaleString()}`} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Commission Breakdown */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Commission Breakdown</h2>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded">
-              <span className="font-semibold">Commission per Ticket</span>
-              <span className="text-primary font-bold">₨ 50</span>
+      {/* Commission Breakdown */}
+      <div className="content-card">
+        <h2 className="section-heading">Commission Breakdown</h2>
+        <div className="space-y-3">
+          {[
+            { label: 'Commission per Ticket',      value: '₨ 50',      type: ''        },
+            { label: 'Total Tickets (This Month)', value: '8,200',      type: ''        },
+            { label: 'Total Commission',           value: '₨ 410,000', type: 'primary' },
+            { label: 'Platform Operating Costs',   value: '₨ 150,000', type: 'warning' },
+            { label: 'Net Profit',                 value: '₨ 260,000', type: 'success' },
+          ].map((row, i) => (
+            <div
+              key={i}
+              className={`flex items-center justify-between px-4 py-3 rounded-lg text-sm ${
+                row.type === 'primary' ? 'bg-primary text-white'                          :
+                row.type === 'success' ? 'bg-primary-light border border-primary/20'     :
+                row.type === 'warning' ? 'bg-warning-light'                              :
+                'bg-divider'
+              }`}
+            >
+              <span className={`font-medium ${row.type === 'primary' ? 'text-white' : 'text-black'}`}>{row.label}</span>
+              <span className={`font-bold ${
+                row.type === 'primary' ? 'text-white'   :
+                row.type === 'warning' ? 'text-warning' :
+                row.type === 'success' ? 'text-primary' :
+                'text-black'
+              }`}>{row.value}</span>
             </div>
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded">
-              <span className="font-semibold">Total Tickets (This Month)</span>
-              <span className="text-primary font-bold">8,200</span>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-primary text-white rounded">
-              <span className="font-semibold">Total Commission</span>
-              <span className="font-bold">₨ 410,000</span>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded">
-              <span className="font-semibold">Platform Operating Costs</span>
-              <span className="text-red-600 font-bold">₨ 150,000</span>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-green-50 rounded border-2 border-green-200">
-              <span className="font-semibold">Net Profit</span>
-              <span className="text-green-600 font-bold">₨ 260,000</span>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 export default RevenueAnalytics;
