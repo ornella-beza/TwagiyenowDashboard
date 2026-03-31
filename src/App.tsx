@@ -11,6 +11,7 @@ import BookingsManagement from './pages/BookingsManagement';
 import RevenueAnalytics from './pages/RevenueAnalytics';
 import DisputeCenter from './pages/DisputeCenter';
 import RouteRegulator from './pages/RouteRegulator';
+import QRScanner from './pages/QRScanner';
 import Login from './pages/Login';
 import './index.css';
 
@@ -35,6 +36,7 @@ const App: React.FC = () => {
               <Route path="/revenue" element={<RevenueAnalytics />} />
               <Route path="/disputes" element={<DisputeCenter />} />
               <Route path="/routes" element={<RouteRegulator />} />
+              <Route path="/scan-qr" element={<QRScanner />} />
             </Routes>
           </main>
         </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   BarChart3, Building2, TrendingUp, AlertCircle, MapPin,
-  Bus, Calendar, Car, Ticket, ChevronLeft, ChevronRight,
+  Bus, Calendar, Car, Ticket, ChevronLeft, ChevronRight, QrCode,
   LucideIcon,
 } from 'lucide-react';
 
@@ -22,6 +22,7 @@ const menuItems: MenuItem[] = [
   { path: '/revenue',     label: 'Revenue',          icon: TrendingUp   },
   { path: '/disputes',    label: 'Disputes',         icon: AlertCircle  },
   { path: '/routes',      label: 'Routes',           icon: MapPin       },
+  { path: '/scan-qr',     label: 'Scan QR',          icon: QrCode       },
 ];
 
 const Sidebar: React.FC = () => {
