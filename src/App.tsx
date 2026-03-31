@@ -1,29 +1,32 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Dashboard from './pages/Dashboard';
-import CompanyOnboarding from './pages/CompanyOnboarding';
-import RevenueAnalytics from './pages/RevenueAnalytics';
-import DisputeCenter from './pages/DisputeCenter';
-import RouteRegulator from './pages/RouteRegulator';
-import PlatformHealth from './pages/PlatformHealth';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import OperatorLayout from './components/OperatorLayout';
+import OperatorDashboard from './pages/operator/OperatorDashboard';
+import FleetStaff from './pages/operator/FleetStaff';
+import Scheduling from './pages/operator/Scheduling';
+import Manifest from './pages/operator/Manifest';
+import SeatInventory from './pages/operator/SeatInventory';
 import './index.css';
 
 const App: React.FC = () => {
   return (
     <Router>
-      <div className="flex flex-col h-screen bg-gray-100">
-        <main className="flex-1 overflow-auto pb-24">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/companies" element={<CompanyOnboarding />} />
-            <Route path="/revenue" element={<RevenueAnalytics />} />
-            <Route path="/disputes" element={<DisputeCenter />} />
-            <Route path="/routes" element={<RouteRegulator />} />
-            <Route path="/health" element={<PlatformHealth />} />
-          </Routes>
-        </main>
-        <Sidebar />
-      </div>
+      <Routes>
+        <Route path="/" element={<Navigate to="/operator" replace />} />
+        <Route
+          path="/operator/*"
+          element={
+            <OperatorLayout>
+              <Routes>
+                <Route path="/" element={<OperatorDashboard />} />
+                <Route path="/fleet" element={<FleetStaff />} />
+                <Route path="/scheduling" element={<Scheduling />} />
+                <Route path="/manifest" element={<Manifest />} />
+                <Route path="/seats" element={<SeatInventory />} />
+              </Routes>
+            </OperatorLayout>
+          }
+        />
+      </Routes>
     </Router>
   );
 };
