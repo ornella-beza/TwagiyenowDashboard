@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { AlertCircle, CheckCircle, Clock, DollarSign } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertCircle, CheckCircle, Clock, RotateCcw } from 'lucide-react';
 
 interface Dispute {
   id: number;
@@ -12,169 +12,127 @@ interface Dispute {
   date: string;
 }
 
+const initialDisputes: Dispute[] = [
+  { id: 1, passenger: 'John Doe',   company: 'RITCO',         route: 'Kigali–Musanze', issue: 'Bus cancelled without notice', amount: 15000, status: 'pending',  date: '2024-01-20' },
+  { id: 2, passenger: 'Jane Smith', company: 'Horizon',       route: 'Kigali–Muhanga', issue: 'Overcharged for ticket',        amount: 5000,  status: 'resolved', date: '2024-01-19' },
+  { id: 3, passenger: 'Bob Wilson', company: 'Kigali Express',route: 'Kigali–Gitarama',issue: 'Poor service quality',          amount: 8000,  status: 'pending',  date: '2024-01-18' },
+  { id: 4, passenger: 'Alice M.',   company: 'Rwanda Star',   route: 'Kigali–Butare',  issue: 'Seat not available on boarding',amount: 20000, status: 'rejected', date: '2024-01-17' },
+];
+
+const statusConfig = {
+  pending:  { badge: 'badge-yellow', icon: Clock,        label: 'Pending'  },
+  resolved: { badge: 'badge-green',  icon: CheckCircle,  label: 'Resolved' },
+  rejected: { badge: 'badge-red',    icon: AlertCircle,  label: 'Rejected' },
+};
+
 const DisputeCenter: React.FC = () => {
-  const [disputes, setDisputes] = useState<Dispute[]>([
-    {
-      id: 1,
-      passenger: 'John Doe',
-      company: 'RITCO',
-      route: 'Kigali-Musanze',
-      issue: 'Bus cancelled without notice',
-      amount: 15000,
-      status: 'pending',
-      date: '2024-01-20',
-    },
-    {
-      id: 2,
-      passenger: 'Jane Smith',
-      company: 'Horizon',
-      route: 'Kigali-Muhanga',
-      issue: 'Overcharged for ticket',
-      amount: 5000,
-      status: 'resolved',
-      date: '2024-01-19',
-    },
-    {
-      id: 3,
-      passenger: 'Bob Wilson',
-      company: 'Kigali Express',
-      route: 'Kigali-Gitarama',
-      issue: 'Poor service quality',
-      amount: 8000,
-      status: 'pending',
-      date: '2024-01-18',
-    },
-  ]);
+  const [disputes, setDisputes]     = useState<Dispute[]>(initialDisputes);
+  const [massRoute, setMassRoute]   = useState('');
+  const [massAmount, setMassAmount] = useState('');
 
-  const [massRefundRoute, setMassRefundRoute] = useState<string>('');
-  const [massRefundAmount, setMassRefundAmount] = useState<string>('');
+  const setStatus = (id: number, status: 'pending' | 'resolved' | 'rejected') =>
+    setDisputes((prev) => prev.map((d) => d.id === id ? { ...d, status } : d));
 
-  const updateDisputeStatus = (id: number, newStatus: 'pending' | 'resolved' | 'rejected'): void => {
-    setDisputes(disputes.map(d => d.id === id ? { ...d, status: newStatus } : d));
-  };
-
-  const handleMassRefund = (): void => {
-    if (massRefundRoute && massRefundAmount) {
-      alert(`Mass refund initiated for ${massRefundRoute}: ₨ ${massRefundAmount}`);
-      setMassRefundRoute('');
-      setMassRefundAmount('');
+  const handleMassRefund = () => {
+    if (massRoute && massAmount) {
+      alert(`Mass refund initiated for route "${massRoute}": ₨ ${parseInt(massAmount).toLocaleString()} per passenger`);
+      setMassRoute('');
+      setMassAmount('');
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Clock size={20} className="text-yellow-600" />;
-      case 'resolved':
-        return <CheckCircle size={20} className="text-green-600" />;
-      default:
-        return <AlertCircle size={20} className="text-red-600" />;
-    }
-  };
-
-  const pendingCount = disputes.filter(d => d.status === 'pending').length;
-  const totalRefunded = disputes.filter(d => d.status === 'resolved').reduce((sum, d) => sum + d.amount, 0);
+  const pending  = disputes.filter((d) => d.status === 'pending').length;
+  const refunded = disputes.filter((d) => d.status === 'resolved').reduce((s, d) => s + d.amount, 0);
+  const resRate  = Math.round((disputes.filter((d) => d.status === 'resolved').length / disputes.length) * 100);
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Dispute & Refund Center</h1>
+    <div className="page-container">
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-gray-600 text-sm">Pending Disputes</p>
-          <p className="text-3xl font-bold text-yellow-600">{pendingCount}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-gray-600 text-sm">Total Refunded</p>
-          <p className="text-3xl font-bold text-green-600">₨ {totalRefunded.toLocaleString()}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-gray-600 text-sm">Resolution Rate</p>
-          <p className="text-3xl font-bold text-primary">67%</p>
-        </div>
+      {/* Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+        {[
+          { label: 'Pending Disputes', value: pending,                          color: '#E67E22' },
+          { label: 'Total Refunded',   value: `₨ ${refunded.toLocaleString()}`, color: '#1E8449' },
+          { label: 'Resolution Rate',  value: `${resRate}%`,                    color: '#F5A623' },
+        ].map((s, i) => (
+          <div key={i} className="stat-card">
+            <p className="text-xs text-muted font-medium uppercase tracking-wide">{s.label}</p>
+            <p className="text-3xl font-bold mt-1" style={{ color: s.color }}>{s.value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Mass Refund Section */}
-      <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-bold text-red-800 mb-4">🚨 Mass Refund (Route Cancellation)</h2>
-        <p className="text-red-700 mb-4">Trigger automatic refunds for all passengers on a cancelled route</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Mass Refund */}
+      <div className="mb-8 p-5 bg-warning-light border-2 border-warning/30 rounded-xl">
+        <div className="flex items-center gap-2 mb-1">
+          <RotateCcw size={18} className="text-warning" />
+          <h2 className="text-base font-bold text-warning">Mass Refund — Route Cancellation</h2>
+        </div>
+        <p className="text-sm text-warning/80 mb-4">Trigger automatic refunds for all passengers on a cancelled route.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <input
-            type="text"
-            placeholder="Route (e.g., Kigali-Musanze)"
-            value={massRefundRoute}
-            onChange={(e) => setMassRefundRoute(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="input-field border-warning/30 focus:border-warning focus:ring-warning/20"
+            placeholder="Route (e.g. Kigali–Musanze)"
+            value={massRoute}
+            onChange={(e) => setMassRoute(e.target.value)}
           />
           <input
+            className="input-field border-warning/30 focus:border-warning focus:ring-warning/20"
+            placeholder="Refund Amount per Passenger (₨)"
             type="number"
-            placeholder="Refund Amount per Passenger"
-            value={massRefundAmount}
-            onChange={(e) => setMassRefundAmount(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            value={massAmount}
+            onChange={(e) => setMassAmount(e.target.value)}
           />
-          <button
-            onClick={handleMassRefund}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold"
-          >
+          <button onClick={handleMassRefund} className="btn-primary justify-center bg-warning hover:bg-warning/90 focus:ring-warning/30">
             Trigger Mass Refund
           </button>
         </div>
       </div>
 
-      {/* Disputes Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Table */}
+      <div className="table-container">
         <table className="w-full">
-          <thead className="bg-primary text-white">
+          <thead>
             <tr>
-              <th className="px-6 py-4 text-left">Passenger</th>
-              <th className="px-6 py-4 text-left">Company</th>
-              <th className="px-6 py-4 text-left">Route</th>
-              <th className="px-6 py-4 text-left">Issue</th>
-              <th className="px-6 py-4 text-left">Amount</th>
-              <th className="px-6 py-4 text-left">Status</th>
-              <th className="px-6 py-4 text-left">Date</th>
-              <th className="px-6 py-4 text-left">Actions</th>
+              <th className="th-cell">Passenger</th>
+              <th className="th-cell">Company</th>
+              <th className="th-cell">Route</th>
+              <th className="th-cell">Issue</th>
+              <th className="th-cell">Amount</th>
+              <th className="th-cell">Status</th>
+              <th className="th-cell">Date</th>
+              <th className="th-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {disputes.map((dispute) => (
-              <tr key={dispute.id} className="border-b hover:bg-gray-50">
-                <td className="px-6 py-4 font-semibold text-gray-800">{dispute.passenger}</td>
-                <td className="px-6 py-4 text-gray-700">{dispute.company}</td>
-                <td className="px-6 py-4 text-gray-700">{dispute.route}</td>
-                <td className="px-6 py-4 text-gray-700">{dispute.issue}</td>
-                <td className="px-6 py-4 font-semibold text-primary">₨ {dispute.amount.toLocaleString()}</td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(dispute.status)}
-                    <span className="text-sm font-semibold capitalize">{dispute.status}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600">{dispute.date}</td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    {dispute.status === 'pending' && (
-                      <>
-                        <button
-                          onClick={() => updateDisputeStatus(dispute.id, 'resolved')}
-                          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => updateDisputeStatus(dispute.id, 'rejected')}
-                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                        >
-                          Reject
-                        </button>
-                      </>
+            {disputes.map((d) => {
+              const cfg = statusConfig[d.status];
+              const StatusIcon = cfg.icon;
+              return (
+                <tr key={d.id} className="tr-row">
+                  <td className="td-cell font-semibold text-black">{d.passenger}</td>
+                  <td className="td-cell text-black">{d.company}</td>
+                  <td className="td-cell text-black">{d.route}</td>
+                  <td className="td-cell text-muted max-w-[200px] truncate">{d.issue}</td>
+                  <td className="td-cell font-semibold text-primary">₨ {d.amount.toLocaleString()}</td>
+                  <td className="td-cell">
+                    <div className="flex items-center gap-1.5">
+                      <StatusIcon size={14} />
+                      <span className={cfg.badge}>{cfg.label}</span>
+                    </div>
+                  </td>
+                  <td className="td-cell text-muted text-xs">{d.date}</td>
+                  <td className="td-cell">
+                    {d.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button onClick={() => setStatus(d.id, 'resolved')} className="btn-approve">Approve</button>
+                        <button onClick={() => setStatus(d.id, 'rejected')} className="btn-reject">Reject</button>
+                      </div>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
