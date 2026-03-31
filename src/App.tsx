@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
@@ -11,9 +11,13 @@ import BookingsManagement from './pages/BookingsManagement';
 import RevenueAnalytics from './pages/RevenueAnalytics';
 import DisputeCenter from './pages/DisputeCenter';
 import RouteRegulator from './pages/RouteRegulator';
+import Login from './pages/Login';
 import './index.css';
 
 const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('admin_token'));
+
+  if (!isLoggedIn) return <Login onLogin={() => setIsLoggedIn(true)} />;
   return (
     <Router>
       <div className="flex h-screen overflow-hidden bg-surface">
