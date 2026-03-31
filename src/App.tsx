@@ -17,9 +17,14 @@ import BookingsManagement from './pages/BookingsManagement';
 import RevenueAnalytics from './pages/RevenueAnalytics';
 import DisputeCenter from './pages/DisputeCenter';
 import RouteRegulator from './pages/RouteRegulator';
+import QRScanner from './pages/QRScanner';
+import Login from './pages/Login';
 import './index.css';
 
 const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('admin_token'));
+
+  if (!isLoggedIn) return <Login onLogin={() => setIsLoggedIn(true)} />;
   return (
     <Router>
       <Routes>

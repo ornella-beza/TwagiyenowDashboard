@@ -1,114 +1,69 @@
-import React from 'react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
-} from 'recharts';
-import { TrendingUp, Users, Bus, AlertTriangle, LucideIcon, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-
-interface RevenueData {
-  date: string;
-  revenue: number;
-  commission: number;
-}
-
-interface DemandRoute {
-  location: string;
-  demand: number;
-  available: number;
-}
-
-interface StatCard {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-  iconBg: string;
-  iconColor: string;
-  trend: string;
-  trendUp: boolean;
-}
-
-const revenueData: RevenueData[] = [
-  { date: 'Mon', revenue: 45000, commission: 2250 },
-  { date: 'Tue', revenue: 52000, commission: 2600 },
-  { date: 'Wed', revenue: 48000, commission: 2400 },
-  { date: 'Thu', revenue: 61000, commission: 3050 },
-  { date: 'Fri', revenue: 55000, commission: 2750 },
-  { date: 'Sat', revenue: 67000, commission: 3350 },
-  { date: 'Sun', revenue: 72000, commission: 3600 },
-];
-
-const demandRoutes: DemandRoute[] = [
-  { location: 'Kigali – Musanze',   demand: 85, available: 45 },
-  { location: 'Kigali – Gitarama',  demand: 72, available: 60 },
-  { location: 'Kigali – Muhanga',   demand: 90, available: 30 },
-  { location: 'Kigali – Ruhengeri', demand: 65, available: 50 },
-  { location: 'Kigali – Butare',    demand: 78, available: 40 },
-];
-
-const stats: StatCard[] = [
-  {
-    label: 'Total Revenue (Today)',
-    value: '₨ 45.2M',
-    icon: TrendingUp,
-    iconBg: '#E8F5E9',
-    iconColor: '#1E8449',
-    trend: '+12% vs yesterday',
-    trendUp: true,
-  },
-  {
-    label: 'Active Buses',
-    value: '1,234',
-    icon: Bus,
-    iconBg: '#FFF8E1',
-    iconColor: '#F5A623',
-    trend: '+18 since morning',
-    trendUp: true,
-  },
-  {
-    label: 'Total Users',
-    value: '52.3K',
-    icon: Users,
-    iconBg: '#FEF3E2',
-    iconColor: '#E67E22',
-    trend: '+340 this week',
-    trendUp: true,
-  },
-  {
-    label: 'Pending Disputes',
-    value: '23',
-    icon: AlertTriangle,
-    iconBg: '#F5F5F5',
-    iconColor: '#888888',
-    trend: '–5 from yesterday',
-    trendUp: false,
-  },
-];
+import React, { useEffect, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Users, Bus, Calendar, ArrowUpRight, Route } from 'lucide-react';
+import api from '../api';
 
 const Dashboard: React.FC = () => {
+  const [stats, setStats] = useState<any>(null);
+  const [weekData, setWeekData] = useState<any[]>([]);
+  const [buses, setBuses] = useState<any[]>([]);
+  const [routes, setRoutes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [statsRes, weekRes, busesRes, routesRes] = await Promise.all([
+          api.get('/admin/stats'),
+          api.get('/admin/stats/bookings-week'),
+          api.get('/buses'),
+          api.get('/routes'),
+        ]);
+        setStats(statsRes.data);
+        setWeekData(weekRes.data.map((d: any) => ({
+          date: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
+          revenue: parseFloat(d.revenue),
+          bookings: parseInt(d.bookings),
+        })));
+        setBuses(busesRes.data);
+        setRoutes(routesRes.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  if (loading) return <div className="page-container flex items-center justify-center h-64"><p className="text-muted">Loading dashboard...</p></div>;
+
+  const statCards = [
+    { label: 'Total Users',       value: stats?.total_users ?? 0,      icon: Users,      iconBg: '#E8F5E9', iconColor: '#1E8449' },
+    { label: 'Total Buses',       value: stats?.total_buses ?? 0,      icon: Bus,        iconBg: '#FFF8E1', iconColor: '#F5A623' },
+    { label: 'Total Routes',      value: stats?.total_routes ?? 0,     icon: Route,      iconBg: '#FEF3E2', iconColor: '#E67E22' },
+    { label: 'Bookings Today',    value: stats?.bookings_today ?? 0,   icon: Calendar,   iconBg: '#F5F5F5', iconColor: '#888888' },
+    { label: 'Revenue Today (RWF)', value: `${(stats?.revenue_today ?? 0).toLocaleString()} RWF`, icon: TrendingUp, iconBg: '#E8F5E9', iconColor: '#1E8449' },
+    { label: 'Schedules Today',   value: stats?.schedules_today ?? 0,  icon: Calendar,   iconBg: '#FFF8E1', iconColor: '#F5A623' },
+  ];
+
   return (
     <div className="page-container">
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
-        {stats.map((stat, idx) => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+        {statCards.map((stat, idx) => {
           const Icon = stat.icon;
-          const TrendIcon = stat.trendUp ? ArrowUpRight : ArrowDownRight;
           return (
             <div key={idx} className="stat-card">
               <div className="flex items-start justify-between mb-4">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: stat.iconBg }}
-                >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: stat.iconBg }}>
                   <Icon size={20} style={{ color: stat.iconColor }} />
                 </div>
+                <ArrowUpRight size={16} className="text-muted" />
               </div>
               <p className="text-xs font-medium text-muted uppercase tracking-wide">{stat.label}</p>
               <p className="text-2xl font-bold text-black mt-1">{stat.value}</p>
-              <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${stat.trendUp ? 'text-primary' : 'text-muted'}`}>
-                <TrendIcon size={13} />
-                <span>{stat.trend}</span>
-              </div>
             </div>
           );
         })}
@@ -117,38 +72,38 @@ const Dashboard: React.FC = () => {
       {/* Charts row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
 
-        {/* Revenue Bar Chart — 2/3 width */}
+        {/* Weekly Revenue Chart */}
         <div className="content-card xl:col-span-2">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="section-heading mb-0">Weekly Revenue & Commission</h2>
-            <span className="badge badge-green">This Week</span>
+            <h2 className="section-heading mb-0">Weekly Bookings & Revenue</h2>
+            <span className="badge badge-green">Last 7 Days</span>
           </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={revenueData} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F5" />
-              <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#888888' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#888888' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-              <Tooltip
-                contentStyle={{ borderRadius: '8px', border: '1px solid #F5F5F5', fontSize: 13 }}
-                formatter={(value: number) => [`₨ ${value.toLocaleString()}`, '']}
-              />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="revenue"    fill="#1E8449" name="Total Revenue"       radius={[4, 4, 0, 0]} />
-              <Bar dataKey="commission" fill="#F5A623" name="Platform Commission" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {weekData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={weekData} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F5" />
+                <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#888888' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: '#888888' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #F5F5F5', fontSize: 13 }} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="revenue"  fill="#1E8449" name="Revenue (RWF)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="bookings" fill="#F5A623" name="Bookings"      radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64 text-muted text-sm">No booking data yet</div>
+          )}
         </div>
 
-        {/* Quick Stats — 1/3 width */}
+        {/* Platform Summary */}
         <div className="content-card flex flex-col gap-4">
           <h2 className="section-heading mb-0">Platform Summary</h2>
-
           {[
-            { label: 'Companies Onboarded', value: '38',     color: '#1E8449' },
-            { label: 'Routes Defined',       value: '124',    color: '#F5A623' },
-            { label: 'Bookings (Today)',      value: '4,820',  color: '#E67E22' },
-            { label: 'Avg Ticket Price',      value: '₨ 9.5K', color: '#888888' },
-            { label: 'System Uptime',         value: '99.9%',  color: '#1E8449' },
+            { label: 'Total Buses',      value: stats?.total_buses,      color: '#1E8449' },
+            { label: 'Total Routes',     value: stats?.total_routes,     color: '#F5A623' },
+            { label: 'Bookings Today',   value: stats?.bookings_today,   color: '#E67E22' },
+            { label: 'Schedules Today',  value: stats?.schedules_today,  color: '#888888' },
+            { label: 'Total Users',      value: stats?.total_users,      color: '#1E8449' },
           ].map((item, i) => (
             <div key={i} className="flex items-center justify-between py-3 border-b border-divider last:border-0">
               <span className="text-sm text-muted">{item.label}</span>
@@ -158,45 +113,56 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Demand Heatmap */}
-      <div className="content-card">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="section-heading mb-0">🔥 Demand Heatmap — Sold Out Routes</h2>
-            <p className="text-xs text-muted mt-1">Routes where users are searching but finding no available seats</p>
-          </div>
-          <span className="badge badge-yellow">Live</span>
-        </div>
-
-        <div className="space-y-4">
-          {demandRoutes.map((route, idx) => {
-            const shortage = route.demand - route.available;
-            const pct = Math.round((shortage / route.demand) * 100);
-            return (
-              <div key={idx}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-medium text-black">{route.location}</span>
-                  <div className="flex items-center gap-3 text-xs text-muted">
-                    <span>Demand: <strong className="text-black">{route.demand}</strong></span>
-                    <span>Available: <strong className="text-black">{route.available}</strong></span>
-                    <span className="text-warning font-semibold">–{shortage} seats</span>
-                  </div>
-                </div>
-                <div className="progress-track">
-                  <div className="progress-fill-red" style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-5 p-4 bg-warning-light border border-warning/30 rounded-lg">
-          <p className="text-sm text-warning">
-            <strong>Action required:</strong> Contact bus companies to add more buses on high-demand routes.
-            Kigali – Muhanga has the highest shortage (60 seats, 67% unmet demand).
-          </p>
+      {/* Routes Table */}
+      <div className="content-card mb-6">
+        <h2 className="section-heading mb-4">Active Routes ({routes.length})</h2>
+        <div className="table-container">
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className="th-cell">From</th>
+                <th className="th-cell">To</th>
+                <th className="th-cell">Distance (km)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {routes.map((r: any) => (
+                <tr key={r.id} className="tr-row">
+                  <td className="td-cell font-semibold text-black">{r.from_city}</td>
+                  <td className="td-cell text-black">{r.to_city}</td>
+                  <td className="td-cell text-muted">{r.distance_km} km</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      {/* Buses Table */}
+      <div className="content-card">
+        <h2 className="section-heading mb-4">Registered Buses ({buses.length})</h2>
+        <div className="table-container">
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className="th-cell">Name</th>
+                <th className="th-cell">Plate</th>
+                <th className="th-cell">Capacity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {buses.map((b: any) => (
+                <tr key={b.id} className="tr-row">
+                  <td className="td-cell font-semibold text-black">{b.name}</td>
+                  <td className="td-cell font-mono text-xs text-muted">{b.plate}</td>
+                  <td className="td-cell text-muted">{b.capacity} seats</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   );
 };
